@@ -67,7 +67,7 @@ int main(int argc, const char* argv[]) {
   	fclose(dest);
   	return 2;
   }
-  saveEBU(dest,ebu);
+  saveEBU(dest,&ebu);
   fclose(dest);
 
 

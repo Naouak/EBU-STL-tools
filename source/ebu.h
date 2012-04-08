@@ -61,8 +61,8 @@ struct EBU{
 };
 
 struct EBU parseEBU(FILE* f);
-void saveEBU(FILE* f, struct EBU ebu);
-struct EBU_TC* charToTC(unsigned char TC[8]);
+void saveEBU(FILE* f, const struct EBU* ebu);
+struct EBU_TC* charToTC(const unsigned char TC[8]);
 void TCToChar(unsigned char tc[8],const struct EBU_TC TC);
-struct EBU_TC shiftTC(struct EBU_TC tc, struct EBU_TC shift, short int positive);
-void shiftTCs(struct EBU* ebu, struct EBU_TC shift, int positive);
+struct EBU_TC shiftTC(const struct EBU_TC tc, const struct EBU_TC shift, const short int positive);
+void shiftTCs(struct EBU* ebu, const struct EBU_TC shift, const int positive);

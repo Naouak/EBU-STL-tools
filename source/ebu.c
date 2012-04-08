@@ -20,19 +20,18 @@ struct EBU parseEBU(FILE* f){
 	return ebu;
 }
 
-void saveEBU(FILE* f, struct EBU ebu){
-	fwrite(&(ebu.gsi),1024,1,f);
+void saveEBU(FILE* f,const struct EBU * ebu){
+	fwrite(&(ebu->gsi),1024,1,f);
 
 	unsigned char TNB[6];
-	strncpy(TNB,ebu.gsi.TNB,5);
+	strncpy(TNB,ebu->gsi.TNB,5);
 	TNB[5] = '\0';
 	int nTNB = atoi(TNB);
 
-	fwrite(ebu.tti,128,nTNB,f);
-
+	fwrite(ebu->tti,128,nTNB,f);
 }
 
-struct EBU_TC* charToTC(unsigned char TC[8]){
+struct EBU_TC* charToTC(const unsigned char TC[8]){
 	struct EBU_TC* tc = malloc(sizeof(struct EBU_TC));
 
 	unsigned char part[3];
@@ -61,7 +60,7 @@ void TCToChar(unsigned char tc[8],const struct EBU_TC TC){
 	return;
 }
 
-struct EBU_TC shiftTC(struct EBU_TC tc, struct EBU_TC shift, short int positive){
+struct EBU_TC shiftTC(const struct EBU_TC tc, const struct EBU_TC shift, const short int positive){
 	struct EBU_TC newTC;
 	int carry = 0;
 	int frames = (int) tc.frames - positive * (int)shift.frames;
@@ -111,7 +110,7 @@ struct EBU_TC shiftTC(struct EBU_TC tc, struct EBU_TC shift, short int positive)
 	return newTC;
 }
 
-void shiftTCs(struct EBU* ebu, struct EBU_TC shift, int positive){
+void shiftTCs(struct EBU* ebu, const struct EBU_TC shift, const int positive){
 	struct EBU_TC* tc = charToTC(ebu->gsi.TCF);
 	struct EBU_TC newtc = shiftTC(*tc,shift,positive);
 	free(tc);
