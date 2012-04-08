@@ -60,7 +60,7 @@ struct EBU{
 	struct EBU_TTI* tti;
 };
 
-struct EBU parseEBU(FILE* f);
+struct EBU* parseEBU(FILE* f);
 void saveEBU(FILE* f, const struct EBU* ebu);
 struct EBU_TC* charToTC(const unsigned char TC[8]);
 void TCToChar(unsigned char tc[8],const struct EBU_TC TC);

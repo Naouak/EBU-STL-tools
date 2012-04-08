@@ -4,18 +4,18 @@
 #include "ebu.h"
 
 
-struct EBU parseEBU(FILE* f){
-	struct EBU ebu;
+struct EBU* parseEBU(FILE* f){
+	struct EBU* ebu;
 
-	fread(&(ebu.gsi), 1024, 1, f);
+	fread(&(ebu->gsi), 1024, 1, f);
 
 	unsigned char TNB[6];
-	strncpy(TNB,ebu.gsi.TNB,5);
+	strncpy(TNB,ebu->gsi.TNB,5);
 	TNB[5] = '\0';
 	int nTNB = atoi(TNB);
 	  
-	ebu.tti = (struct EBU_TTI*) malloc(sizeof(struct EBU_TTI) * nTNB);
-	fread(ebu.tti, 128, nTNB, f);
+	ebu->tti = (struct EBU_TTI*) malloc(sizeof(struct EBU_TTI) * nTNB);
+	fread(ebu->tti, 128, nTNB, f);
 
 	return ebu;
 }

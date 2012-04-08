@@ -28,45 +28,47 @@ int main(int argc, const char* argv[]) {
 	}
 
 	if(input == NULL || output == NULL || nshift == 0){
-    if(input == NULL)
-      printf("no input set\n");
-    if(output == NULL)
-      printf("no output set\n");
-    if(nshift == 0)
-      printf("no shift set\n");
+		if(input == NULL)
+			printf("no input set\n");
+		if(output == NULL)
+			printf("no output set\n");
+		if(nshift == 0)
+			printf("no shift set\n");
 		printf("Usage: %s -i input.stl -t timeshift([-]HHMMSSFF) output.stl",argv[0]);
 		return 0;
 	}
 
 
-  FILE* source = fopen(input,"r");
-  if(source == NULL){
-  		fclose(source);
-  		return 1;
-  }
-  struct EBU ebu = parseEBU(source);
-  fclose(source);
+	FILE* source = fopen(input,"r");
+	if(source == NULL){
+		fclose(source);
+		return 1;
+	}
+	struct EBU* ebu = parseEBU(source);
+	fclose(source);
 
-  struct EBU_TC shift;
-  int positive = nshift>0?1:-1;
-  if(positive < 0)
-    nshift *= -1;
-  shift.frames = nshift%100;
-  nshift /= 100;
-  shift.seconds = nshift%100;
-  nshift /= 100;
-  shift.minutes = nshift%100;
-  nshift /= 100;
-  shift.hours = nshift%100;
-  
-  shiftTCs(&ebu,shift,positive);
-  FILE* dest = fopen(output,"w");
-  if(dest == NULL){
-  	fclose(dest);
-  	return 2;
-  }
-  saveEBU(dest,&ebu);
-  fclose(dest);
+	struct EBU_TC shift;
+	int positive = nshift>0?1:-1;
+	if(positive < 0)
+		nshift *= -1;
+	shift.frames = nshift%100;
+	nshift /= 100;
+	shift.seconds = nshift%100;
+	nshift /= 100;
+	shift.minutes = nshift%100;
+	nshift /= 100;
+	shift.hours = nshift%100;
 
-  return 0;
+	shiftTCs(ebu,shift,positive);
+	FILE* dest = fopen(output,"w");
+	if(dest == NULL){
+		fclose(dest);
+		return 2;
+	}
+	saveEBU(dest,ebu);
+	fclose(dest);
+
+	free(ebu);
+
+	return 0;
 }
