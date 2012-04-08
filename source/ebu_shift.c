@@ -59,8 +59,6 @@ int main(int argc, const char* argv[]) {
   nshift /= 100;
   shift.hours = nshift%100;
   
-  
-
   shiftTCs(&ebu,shift,positive);
   FILE* dest = fopen(output,"w");
   if(dest == NULL){
@@ -69,19 +67,6 @@ int main(int argc, const char* argv[]) {
   }
   saveEBU(dest,&ebu);
   fclose(dest);
-
-
-  unsigned char TNB[6];
-  strncpy(TNB,ebu.gsi.TNB,5);
-  TNB[5] = '\0';
-  int nTNB = atoi(TNB);
-
-  for(i = 0; i < nTNB; i++){
-    printf("%02d:%02d:%02d:%02d\n",ebu.tti[i].TCI.hours,ebu.tti[i].TCI.minutes,ebu.tti[i].TCI.seconds,ebu.tti[i].TCI.frames);
-    printf("%02d:%02d:%02d:%02d\n",ebu.tti[i].TCO.hours,ebu.tti[i].TCO.minutes,ebu.tti[i].TCO.seconds,ebu.tti[i].TCO.frames);
-  }
-
-
 
   return 0;
 }
