@@ -5,7 +5,7 @@
 
 
 struct EBU* parseEBU(FILE* f){
-	struct EBU* ebu;
+	struct EBU* ebu = malloc(sizeof(struct EBU));
 
 	fread(&(ebu->gsi), 1024, 1, f);
 
@@ -13,9 +13,11 @@ struct EBU* parseEBU(FILE* f){
 	strncpy(TNB,ebu->gsi.TNB,5);
 	TNB[5] = '\0';
 	int nTNB = atoi(TNB);
-	  
+
+	//printf("TNB : : %d \n",nTNB);
+
 	ebu->tti = (struct EBU_TTI*) malloc(sizeof(struct EBU_TTI) * nTNB);
-	fread(ebu->tti, 128, nTNB, f);
+	fread(ebu->tti, sizeof(struct EBU_TTI), nTNB, f);
 
 	return ebu;
 }

@@ -20,7 +20,7 @@ struct EBU_GSI{
 	unsigned char TNG[3];
 	unsigned char MNC[2];
 	unsigned char MNR[2];
-	unsigned char TCS[1];
+	unsigned char TCS;
 	unsigned char TCP[8]; //Timecode formatted as HHMMSSFF
 	unsigned char TCF[8]; //idem
 	unsigned char TND;
