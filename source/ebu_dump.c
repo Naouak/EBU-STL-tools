@@ -33,7 +33,7 @@ int main(int argc, const char** argv) {
 	if(output == NULL){
 		if(output == NULL)
 			printf("no output set\n");
-		printf("Usage: %s [-f] [-b] input.stl",argv[0]);
+		printf("Usage: %s [-f] input.stl",argv[0]);
 		return 0;
 	}
 
