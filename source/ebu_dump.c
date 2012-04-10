@@ -63,7 +63,7 @@ int main(int argc, const char** argv) {
 	printf("CD : %.6s\n",ebu->gsi.CD);
 	printf("RD : %.6s\n",ebu->gsi.RD);
 	printf("RN : %.2s\n",ebu->gsi.RN);
-	printf("TNB: %.6s\n",ebu->gsi.TNB);
+	printf("TNB: %.5s\n",ebu->gsi.TNB);
 	printf("TNS: %.5s\n",ebu->gsi.TNS);
 	printf("TNG: %.3s\n",ebu->gsi.TNG);
 	printf("MNC: %.2s\n",ebu->gsi.MNC);
