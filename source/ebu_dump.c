@@ -19,11 +19,15 @@ void dumpTTI(const struct EBU_TTI* tti){
 int main(int argc, const char** argv) {
 	char * output = NULL;
 	int full = 0;
+	int bellenuitmode = 0;
 	int i = 0;
 	for (i = 1; i < argc; ++i)
 	{
 		if(!strcmp(argv[i],"-f")){
 			full = 1;
+		}
+		else if(!strcmp(argv[i],"-b")){
+			bellenuitmode = 1;
 		}
 		else{
 			output = argv[i];
@@ -33,7 +37,7 @@ int main(int argc, const char** argv) {
 	if(output == NULL){
 		if(output == NULL)
 			printf("no output set\n");
-		printf("Usage: %s input.stl",argv[0]);
+		printf("Usage: %s [-f] [-b] input.stl",argv[0]);
 		return 0;
 	}
 
@@ -68,9 +72,15 @@ int main(int argc, const char** argv) {
 	printf("TNG: %.3s\n",ebu->gsi.TNG);
 	printf("MNC: %.2s\n",ebu->gsi.MNC);
 	printf("MNR: %.2s\n",ebu->gsi.MNR);
-	printf("TCS: %hX\n",ebu->gsi.TCS);
-	printf("TCP: %.8s\n",ebu->gsi.TCP);
-	printf("TCF: %.8s\n",ebu->gsi.TCF);
+	printf("TCS: %hX\n",ebu->gsi.TCS);	
+	if(bellenuitmode == 1){
+		printf("TCP: %02hd:%02hd:%02hd:%02hd\n", *(ebu->gsi.TCP),*(ebu->gsi.TCP+1),*(ebu->gsi.TCP+2),*(ebu->gsi.TCP+3));
+		printf("TCF: %02hd:%02hd:%02hd:%02hd\n", *(ebu->gsi.TCF),*(ebu->gsi.TCF+1),*(ebu->gsi.TCF+2),*(ebu->gsi.TCF+3));
+	}
+	else{
+		printf("TCP: %.8s\n",ebu->gsi.TCP);
+		printf("TCF: %.8s\n",ebu->gsi.TCF);
+	}
 	printf("TND: %hX\n",ebu->gsi.TND);
 	printf("DSN: %hX\n",ebu->gsi.DSN);
 	printf("CO : %.3s\n",ebu->gsi.CO);
