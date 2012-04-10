@@ -36,18 +36,25 @@ void saveEBU(FILE* f,const struct EBU * ebu){
 struct EBU_TC* charToTC(const unsigned char TC[8]){
 	struct EBU_TC* tc = malloc(sizeof(struct EBU_TC));
 
-	unsigned char part[3];
-	part[2] = '\0';
+	if(TC[4] == 0x30 && TC[5] == 0x30 && TC[6] == 0x30 && TC[7] == 0x30){
+		tc->hours = TC[0];
+		tc->minutes = TC[1];
+		tc->seconds = TC[2];
+		tc->frames = TC[3];
+	}
+	else{
+		unsigned char part[3];
+		part[2] = '\0';
 
-	strncpy(part,TC,2);
-	tc->hours = atoi(part);
-	strncpy(part,TC+2,2);
-	tc->minutes = atoi(part);
-	strncpy(part,TC+4,2);
-	tc->seconds = atoi(part);
-	strncpy(part,TC+6,2);
-	tc->frames = atoi(part);
-
+		strncpy(part,TC,2);
+		tc->hours = atoi(part);
+		strncpy(part,TC+2,2);
+		tc->minutes = atoi(part);
+		strncpy(part,TC+4,2);
+		tc->seconds = atoi(part);
+		strncpy(part,TC+6,2);
+		tc->frames = atoi(part);
+	}
 	return tc;
 }
 
