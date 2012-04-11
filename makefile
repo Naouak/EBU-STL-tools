@@ -14,4 +14,4 @@ ebu_shift: ebu_shift.o ebu.o
 
 clean:
 	rm *.o
-	rm bin/*.exe
+	rm bin/*
