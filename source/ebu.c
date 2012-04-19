@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 #include "ebu.h"
 
 short unsigned int isBelleNuit(const struct EBU* ebu){
@@ -18,6 +19,43 @@ short unsigned int isBelleNuit(const struct EBU* ebu){
 	else{
 		return 0;
 	}
+}
+
+void BelleNuitFix(const struct EBU* ebu){
+	if(isBelleNuit(ebu)){
+		strncpy(ebu->gsi.TCF,ebu->gsi.TCP,8);
+		strncpy(ebu->gsi.TCP,"00000000",8);
+	}
+}
+
+int TCcmp(const struct EBU_TC* tc1, const struct EBU_TC* tc2){
+	if(tc1->hours != tc2->hours)
+		return tc1->hours - tc2->hours;
+	if(tc1->minutes != tc2->minutes)
+		return tc1->minutes - tc2->minutes;
+	if(tc1->seconds != tc2->seconds)
+		return tc1->seconds - tc2->seconds;
+	return tc1->frames - tc2->frames;
+}
+
+void TrimEBU(struct EBU* ebu,const struct EBU_TC* tc){
+	char tnb[6];
+	tnb[5] = '\0';
+	strncpy(tnb,ebu->gsi.TNB,5);
+
+	int TNB = atoi(tnb);
+	int i;
+	for(i = 0; i < TNB; i++){
+		if(TCcmp(tc,&(ebu->tti[i].TCO)) < 0){
+			i--;
+			break;
+		}
+	}
+
+	strncpy(ebu->gsi.TNB,tnb,5);
+	strncpy(ebu->gsi.TNS,tnb,5);
+
+	ebu->tti = realloc(ebu->tti,i*sizeof(struct EBU_TTI));
 }
 
 struct EBU* parseEBU(FILE* f){
@@ -167,4 +205,42 @@ void shiftTCs(struct EBU* ebu, const struct EBU_TC* shift, const int positive){
 	  	ebu->tti[i].TCO = shiftTC(&(ebu->tti[i].TCO),shift,positive);
 	}
 
+}
+
+void EBUTC30to25(struct EBU_TC* tc){
+	float newframes = (float) tc->frames;
+	newframes *= 25;
+	newframes /= 30;
+	tc->frames = (int) roundf(newframes);
+}
+
+void EBU30to25(struct EBU* ebu){
+	if(ebu->gsi.DFC[3] == '2' && ebu->gsi.DFC[4] == '5'){
+		printf("No conversion needed\n");
+		return;
+	}
+
+	ebu->gsi.DFC[3] = '2';
+	ebu->gsi.DFC[4] = '5';
+
+	struct EBU_TC* newtc;
+	newtc = charToTC(ebu->gsi.TCP);
+	EBUTC30to25(newtc);
+	TCToChar(ebu->gsi.TCP,*newtc);
+
+	newtc = charToTC(ebu->gsi.TCF);
+	EBUTC30to25(newtc);
+	TCToChar(ebu->gsi.TCF,*newtc);
+
+	char cTNB[6];
+	cTNB[5] = '\0';
+
+	strncpy(cTNB,ebu->gsi.TNB,5);
+
+	int TNB = atoi(cTNB);
+	int i;
+	for(i = 0; i < TNB; i++){
+		EBUTC30to25(&(ebu->tti[i].TCI));
+		EBUTC30to25(&(ebu->tti[i].TCO));
+	}
 }

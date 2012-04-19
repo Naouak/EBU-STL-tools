@@ -67,3 +67,7 @@ void TCToChar(unsigned char tc[8],const struct EBU_TC TC);
 struct EBU_TC shiftTC(const struct EBU_TC* tc, const struct EBU_TC* shift, const short int positive);
 void shiftTCs(struct EBU* ebu, const struct EBU_TC* shift, const int positive);
 short unsigned int isBelleNuit(const struct EBU* ebu);
+void TrimEBU(struct EBU* ebu,const struct EBU_TC* tc);
+int TCcmp(const struct EBU_TC* tc1, const struct EBU_TC* tc2);
+void BelleNuitFix(const struct EBU* ebu);
+void EBU30to25(struct EBU* ebu);

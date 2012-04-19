@@ -90,6 +90,8 @@ int main(int argc, const char** argv) {
 			shift->seconds = 0;
 			shift->minutes = 0;
 			shift->hours = 0;
+
+			BelleNuitFix(ebu);
 		}
 		else{
 			shift = charToTC(ebu->gsi.TCP);
