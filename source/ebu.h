@@ -60,6 +60,11 @@ struct EBU{
 	struct EBU_TTI* tti;
 };
 
+typedef struct EBU EBU;
+typedef struct EBU_TTI EBU_TTI;
+typedef struct EBU_TC EBU_TC;
+typedef struct EBU_GSI EBU_GSI;
+
 struct EBU* parseEBU(FILE* f);
 void saveEBU(FILE* f, const struct EBU* ebu);
 struct EBU_TC* charToTC(const unsigned char TC[8]);
@@ -71,3 +76,4 @@ void TrimEBU(struct EBU* ebu,const struct EBU_TC* tc);
 int TCcmp(const struct EBU_TC* tc1, const struct EBU_TC* tc2);
 void BelleNuitFix(const struct EBU* ebu);
 void EBU30to25(struct EBU* ebu);
+void EBURemoveSpecialChars(struct EBU* ebu);

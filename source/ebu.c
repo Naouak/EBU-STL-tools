@@ -244,3 +244,23 @@ void EBU30to25(struct EBU* ebu){
 		EBUTC30to25(&(ebu->tti[i].TCO));
 	}
 }
+
+void EBURemoveSpecialChars(struct EBU* ebu){
+	char tnb[6];
+	tnb[5] = '\0';
+	strncpy(tnb,ebu->gsi.TNB,5);
+
+	int TNB = atoi(tnb);
+	int i;
+	for(i = 0; i < TNB; i++){
+		int j =0;
+		for(j=0;j<112;j++){
+			if(ebu->tti[i].TF[j] > 0xA0){
+				int k;
+				for(k=j+1;k < 112;k++){
+					ebu->tti[i].TF[k-1] = ebu->tti[i].TF[k];
+				}
+			}
+		}
+	}
+}
