@@ -4,15 +4,39 @@
 #include "ebu.h"
 #include "string_utils.h"
 
+void print_version(){
+	printf("Compilation Date : %s\n",VERSION_NUMBER);
+}
+
+void print_help(int argc, const char** argv){
+	printf("Usage:\n\t%s -i input.stl [options] output.stl\n",argv[0]);
+	
+	printf("Actions:\n");
+	printf("\t- Shift timecodes to make the start coincide with timecode 0.\n");
+	printf("\t- Replace SRT tags with corresponding STL value.\n");
+	printf("\t\tIdentified tags:\t<i>,<b>,<u>\n");
+	printf("\t- Fix some errors from BelleNuit(Start Timecode in GSI)\n");
+	printf("\t- Remove double line returns\n");
+
+	printf("Options:\n");
+	printf("\t-t\tShift timecode with value set as param.\n\t\tformat:\t[-]HHMMSSFF\n");
+	printf("\t-s\tShift timecode to make them coincide with param\n\t\tformat:\t[-]HHMMSSFF\n");
+	printf("\t-TCP\tWill make only the start timecode to shift. Any other timecode won't change. Permit to change delay in the subtitle. To use with -t or -s option\n");
+	printf("\t-DSC\tSet the DSC(Display Standard Code) value of the GSI block. May be set as 0, 1 or 2 only.\n");
+	printf("\t-LC\tSet the LC(Language Code) value of the GSI block.\n\t\tformat:\tHH where HH is an hexadecimal number.\n");
+	printf("\t-CPN\tSet the CPN(Code Page Number) value of the GSI block.\n\t\tvalues:\n\t\t\t437\tUnited State\n\t\t\t850\tMultilingual\n\t\t\t860\tPortugal\n\t\t\t863\tCanada-French\n\t\t\t865\tNordic\n");
+	printf("\t-CO\tSet the CO(Country of Origin) value of the GSI block.\n\t\tformat:\t3 ASCII char\n");
+	printf("\t-Teletextfix\tWill add teletext control chars to every line of subtitle.\n");
+	printf("\t-rmSPE\tRemove any character superior to the value 0xA0 from the subtitles\n");
+}
+
 void CRLFtoTeletext(char * str,int position){
 	int j = 0;
 	for(j = 107;j >= position;j--){
-			str[j+4] = str[j];
+			str[j+2] = str[j];
 	}
-	str[position] = 0x0D;
-	str[position+1] = 0x01;
-	str[position+2] = 0x0B;
-	str[position+3] = 0x0B;
+	str[position] = 0x0B;
+	str[position+1] = 0x0B;
 }
 
 void applyTeletextfix(struct EBU* ebu){
@@ -25,12 +49,10 @@ void applyTeletextfix(struct EBU* ebu){
 	for(i = 0; i < TNB; i++){
 		int j = 0;
 		for(j = 107;j >= 0;j--){
-			ebu->tti[i].TF[j+4] = ebu->tti[i].TF[j];
+			ebu->tti[i].TF[j+2] = ebu->tti[i].TF[j];
 		}
-		ebu->tti[i].TF[0] = 0x0D;
-		ebu->tti[i].TF[1] = 0x07;
-		ebu->tti[i].TF[2] = 0x0B;
-		ebu->tti[i].TF[3] = 0x0B;	
+		ebu->tti[i].TF[0] = 0x0B;
+		ebu->tti[i].TF[1] = 0x0B;	
 
 		for(j = 107;j >= 0;j--){
 			if(ebu->tti[i].TF[j] == 0x8A){
@@ -48,8 +70,9 @@ int main(int argc, const char** argv) {
 	int i = 0;
 	int onlyTCP = 0;
 	char DSC[2] = " ";
-	char LC[3] = "  ";
+	char LC[3] = "0F";
 	char CPN[4] = "   ";
+	char CO[4] = "FRA";
 	int Teletextfix = 0;
 	int rmSPE = 0;
 	for (i = 1; i < argc; ++i)
@@ -91,6 +114,11 @@ int main(int argc, const char** argv) {
 				strncpy(CPN,argv[i],3);
 			}
 		}
+		else if(!strcmp(argv[i],"-CO")){
+			i++;
+			if(i < argc)
+				strncpy(CO,argv[i],3);
+		}
 		else if(!strcmp(argv[i],"-Teletextfix")){
 			Teletextfix = 1;
 		}
@@ -104,10 +132,11 @@ int main(int argc, const char** argv) {
 
 	if(input == NULL || output == NULL){
 		if(input == NULL)
-			printf("no input set\n");
+			printf("Error: no input set\n");
 		if(output == NULL)
-			printf("no output set\n");
-		printf("Usage: %s -i input.stl [-t timeshift([-]HHMMSSFF)] [-TCP] output.stl\n",argv[0]);
+			printf("Error: no output set\n");
+		print_version();
+		print_help(argc,argv);
 		return 0;
 	}
 
@@ -155,7 +184,7 @@ int main(int argc, const char** argv) {
 			shift->minutes = 0;
 			shift->hours = 0;
 
-			BelleNuitFix(ebu);
+			
 		}
 		else{
 			shift = charToTC(ebu->gsi.TCP);
@@ -174,6 +203,11 @@ int main(int argc, const char** argv) {
 		nshift /= 100;
 		shift->hours = nshift%100;
 	}
+
+
+	BelleNuitFix(ebu);
+
+
 	printf("Shifting: %02d:%02d:%02d:%02d\n",shift->hours,shift->minutes,shift->seconds,shift->frames);
 	if(onlyTCP){
 		struct EBU_TC* TCP = charToTC(ebu->gsi.TCP);
@@ -194,9 +228,13 @@ int main(int argc, const char** argv) {
 	if(strcmp(CPN,"   ")){
 		strncpy(ebu->gsi.CPN,CPN,3);
 	}
+	if(strcmp(CO,"   ")){
+		strncpy(ebu->gsi.CO,CO,3);
+	}
 
 	if(Teletextfix == 1){
 		applyTeletextfix(ebu);
+		TeletextTrimControl(ebu);
 	}
 	if(rmSPE == 1){
 		EBURemoveSpecialChars(ebu);

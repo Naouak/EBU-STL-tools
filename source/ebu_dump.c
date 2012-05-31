@@ -3,7 +3,7 @@
 #include <string.h>
 #include "ebu.h"
 
-void dumpTTI(const struct EBU_TTI* tti){
+void dumpTTI(struct EBU_TTI* tti){
 	printf("SGN: %hX\n",tti->SGN);
 	printf("SN : %02hX%02hX\n",tti->SN[1],tti->SN[0]);
 	printf("EBN: %hX\n",tti->EBN);
@@ -13,6 +13,27 @@ void dumpTTI(const struct EBU_TTI* tti){
 	printf("VP : %hX\n",tti->VP);
 	printf("JC : %hX\n",tti->JC);
 	printf("CF : %hX\n",tti->CF);
+
+	int i = 0;
+	int j = 0;
+	for(i = 0; i < 112; i++){
+		if(tti->TF[i] == 0X1E){
+			tti->TF[i] = 0x8A;
+		}
+		if(tti->TF[i] >= 0x20 && tti->TF[i] < 0x80){
+			j++;
+		}
+		if(tti->TF[i] == 0x8A || tti->TF[i] == 0x8F){
+			printf("Char Count : %d\t%s\n",j,tti->TF);
+			j = 0;
+			if(tti->TF[i] == 0x8F){
+				break;
+			}
+		}
+
+	}
+
+
 	printf("TF : %.112s\n",tti->TF);
 }
 
@@ -46,6 +67,8 @@ int main(int argc, const char** argv) {
 
 	struct EBU* ebu = parseEBU(source);
 	fclose(source);
+
+	isBelleNuit(ebu);
 	
 
 	printf("CPN: %.3s\n",ebu->gsi.CPN);

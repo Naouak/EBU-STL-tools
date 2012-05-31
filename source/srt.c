@@ -31,9 +31,6 @@ void SRT_itemToEBU_TC(const SRT_timecode* srt, EBU_TC* tc){
 }
 
 
-
-
-
 SRT* loadSRT(FILE* src){
 	SRT* srt = malloc(sizeof(SRT));
 	srt->count = 0;
@@ -54,7 +51,7 @@ SRT* loadSRT(FILE* src){
 			srt->srt[srt->count-1].text = malloc(sizeof(char));
 			srt->srt[srt->count-1].text[0] = '\0';
 
-			printf("%d\n",count);
+			//printf("%d\n",count);
 			
 			SRT_timecode *tcin = srt->srt[srt->count-1].TCI; 
 			SRT_timecode *tcout = srt->srt[srt->count-1].TCO;
@@ -71,17 +68,32 @@ SRT* loadSRT(FILE* src){
 				break;
 			}
 			else{		
-				printf("%d:%d:%d,%d --> %d:%d:%d,%d\n",tcin->hours,tcin->minutes,tcin->seconds,tcin->milliseconds,tcout->hours,tcout->minutes,tcout->seconds,tcout->milliseconds);
+				//printf("%d:%d:%d,%d --> %d:%d:%d,%d\n",tcin->hours,tcin->minutes,tcin->seconds,tcin->milliseconds,tcout->hours,tcout->minutes,tcout->seconds,tcout->milliseconds);
 			}
 
+			int first = 1;
+
+			printf("*****************************\n");
 			while(1){
 				if(fgets(buffer, 256, src)==NULL){
 					break;
 				}
-
+				printf("BUFFER:\t%d\t%s\n",strlen(buffer),buffer);
+				printf("TEXT:\t%d\t%s\n",strlen(item->text),item->text);
 				if(strlen(buffer) > 2){
-					item->text = realloc(item->text, (strlen(item->text) + strlen(buffer)) * sizeof(char) );
-					strncpy(&(item->text[strlen(item->text)]), buffer, strlen(buffer));
+					int length = strlen(item->text);
+					if(first == 1){
+						item->text = malloc(strlen(buffer) * sizeof(char));
+						length = 0;
+						first--;
+					}
+					else{
+						item->text = realloc(item->text, (length + strlen(buffer)) * sizeof(char) );
+						item->text[length-1] = '\n';
+					}
+					
+					strncpy(&(item->text[length]), buffer, strlen(buffer));
+					item->text[length+strlen(buffer)-1] = '\0';
 				}
 				else {
 					break;
@@ -97,8 +109,6 @@ SRT* loadSRT(FILE* src){
 
 	return srt;
 }
-
-
 
 EBU* srtToEBU(SRT* srt){
 	EBU* ebu = malloc(sizeof(EBU));
@@ -146,6 +156,7 @@ EBU* srtToEBU(SRT* srt){
 
 	int i = 0;
 	for(i = 0; i < srt->count; i++){
+		//printf("%d\n",i);
 		ebu->tti[i].SGN = 1;
 		ebu->tti[i].SN[1] = i/256;
 		ebu->tti[i].SN[0] = i%256;
@@ -158,12 +169,23 @@ EBU* srtToEBU(SRT* srt){
 	    ebu->tti[i].JC = 2;
 	    ebu->tti[i].CF = 0;
 
+	    int j;
+
+	    
 	    if(strlen(srt->srt[i].text) > 112){
 	    	srt->srt[i].text[111] = '\0';
 	    }
+
+
+
 	    int len = strlen(srt->srt[i].text);
 	    char * text = malloc(112 * sizeof(char));
+	    for(j=0;j<112;j++){
+	    	text[j] = 0x8F;
+	    }
 	    strncpy(text,srt->srt[i].text,len>112?112:len);
+
+	    //printf("%.112s\n",text);
 
 	    char single[2] = " ";
 	    single[0] = 0x80;
@@ -184,6 +206,12 @@ EBU* srtToEBU(SRT* srt){
 	    single[0] = 0x85;
 	    str_replace(text,"</B>",single);
 	    str_replace(text,"</b>",single);
+
+	    single[0] = 0XFA;
+		str_replace(text,"œ",single);
+		single[0] = 0XEA;
+		str_replace(text,"Œ",single);	    
+
 
 	    char accent[3] = " e";
 	    accent[0] = 0xC2;
@@ -225,31 +253,56 @@ EBU* srtToEBU(SRT* srt){
 	    accent[1] = 'O';
 	    str_replace(text,"Ô",accent);
 
+	    accent[0] = 0xCB;
+	    accent[1] = 'c';
+	    str_replace(text,"ç",accent);
+	    accent[1] = 'C';
+	    str_replace(text,"Ç",accent);
 
-	    int i = (len>112?112:len)-1;
-	    for(;i < 112; i++){
-	    	text[i] = 0x8F;
+	    accent[0] = 0xC2;
+	    accent[1] = 0xA0;
+	    single[0] = 0xA0;
+	    str_replace(text,accent,single);
+
+	    /*accent[0] = 0x00;
+	    accent[1] = 0xA0;
+	    single[0] = 0xA0;
+	    str_replace(text,accent,single);
+		*/
+
+	    j = (len>112?112:len)-1;
+	    for(;j < 112; j++){
+	    	text[j] = 0x8F;
 	    }
-	    for(i=0;i<112;i++){
-	    	if(text[i] == '\n'){
-	    		text[i] = 0x8A;
+	    for(j=0;j<112;j++){
+	    	if(text[j] == '\n'){
+	    		text[j] = 0x8A;
+	    	}
+	    	if(text[j] == 0x00){
+	    		text[j] = 0x8F;
 	    	}
 	    }
-	    printf("%.112s\n",text);
+	    //printf("%.112s\n",text);
 	    strncpy(ebu->tti[i].TF,text,112); 
-	    printf("%.112s\n",ebu->tti[i].TF);
+	    
+	    //printf("%.112s\n",ebu->tti[i].TF);
 	}
 
 	return ebu;
 }
 
-void main(){
-	FILE* f = fopen("/Users/quentinburny/Desktop/Coffee_Prince_50i_ep05.srt","r");
+void main(int argc, char** argv){
+	FILE* f = fopen(argv[1],"r");
+	if(f == NULL){
+		printf("error opening file");
+		return;
+	}
 	SRT* srt = loadSRT(f);
 	fclose(f);
+	
 	EBU* ebu = srtToEBU(srt);
 	
-	f = fopen("test.stl","w");
+	f = fopen(argv[2],"w");
 	saveEBU(f,ebu);
 	fclose(f);
 	

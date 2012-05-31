@@ -1,3 +1,7 @@
+#ifndef EBU_H
+#define EBU_H value
+
+
 //STL HEADER
 struct EBU_GSI{
 	unsigned char CPN[3];
@@ -77,3 +81,7 @@ int TCcmp(const struct EBU_TC* tc1, const struct EBU_TC* tc2);
 void BelleNuitFix(const struct EBU* ebu);
 void EBU30to25(struct EBU* ebu);
 void EBURemoveSpecialChars(struct EBU* ebu);
+void TeletextTrimControl(const struct EBU* ebu);
+void EBU25to24(struct EBU* ebu);
+
+#endif

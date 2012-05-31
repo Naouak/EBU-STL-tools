@@ -3,6 +3,7 @@
 #include <string.h>
 #include <math.h>
 #include "ebu.h"
+#include "string_utils.h"
 
 short unsigned int isBelleNuit(const struct EBU* ebu){
 	unsigned char* TC;
@@ -21,10 +22,120 @@ short unsigned int isBelleNuit(const struct EBU* ebu){
 	}
 }
 
+unsigned char* SanitizeSrtString(unsigned char* str, int length){
+	char* text = malloc(sizeof(char) * length);
+	 strncpy(text,str,length);
+	text[length-1] = '\0';
+
+	char single[2] = " ";
+    single[0] = 0x80;
+    str_replace(text,"<I>",single);
+    str_replace(text,"<i>",single);
+    single[0] = 0x81;
+    str_replace(text,"</I>",single);
+    str_replace(text,"</i>",single);
+    single[0] = 0x82;
+    str_replace(text,"<U>",single);
+    str_replace(text,"<u>",single);
+    single[0] = 0x83;
+    str_replace(text,"</U>",single);
+    str_replace(text,"</u>",single);
+    single[0] = 0x84;
+    str_replace(text,"<B>",single);
+    str_replace(text,"<b>",single);
+    single[0] = 0x85;
+    str_replace(text,"</B>",single);
+    str_replace(text,"</b>",single);
+
+    char triple[3] = "  ";
+    triple[0] = 0x8A;
+    triple[1] = 0x8A;
+    single[0] = 0x8A;
+    str_replace(text,triple,single);
+
+    if(strlen(text) > length){
+    	text = realloc(text,length * sizeof(char));
+    }
+    else if(strlen(text) < length){
+    	int len = strlen(text);
+    	text = realloc(text,length * sizeof(char));
+    	int i = 0;
+    	for (i = len-1; i < length; ++i)
+    	{
+    		text[i] = 0x8F;
+    	}
+    }
+
+    text[length-1] = str[length-1];
+
+    return text;
+}
+
 void BelleNuitFix(const struct EBU* ebu){
 	if(isBelleNuit(ebu)){
 		strncpy(ebu->gsi.TCF,ebu->gsi.TCP,8);
 		strncpy(ebu->gsi.TCP,"00000000",8);
+	}
+
+	char tnb[6];
+	tnb[5] = '\0';
+	strncpy(tnb,ebu->gsi.TNB,5);
+
+	int TNB = atoi(tnb);
+	int i;
+	for(i = 0; i < TNB; i++){
+		strncpy(ebu->tti[i].TF,SanitizeSrtString(ebu->tti[i].TF,112),112);
+	}
+}
+
+unsigned char* TeletextTrimControlLine(unsigned char* str, int length){
+	char* text = malloc(sizeof(char) * length);
+	 strncpy(text,str,length);
+	text[length-1] = '\0';
+
+	char single[5] = "    ";
+	single[0] = 0x0D;
+	single[1] = 0x07;
+	single[2] = 0x0B;
+	single[3] = 0x0B;	
+
+    char triple[3] = "  ";
+    triple[0] = 0x0B;
+	triple[1] = 0x0B;
+    str_replace(text,triple,single);
+
+    if(strlen(text) > length){
+    	text = realloc(text,length * sizeof(char));
+    }
+    else if(strlen(text) < length){
+    	int len = strlen(text);
+    	text = realloc(text,length * sizeof(char));
+    	int i = 0;
+    	for (i = len-1; i < length; ++i)
+    	{
+    		text[i] = 0x8F;
+    	}
+    }
+
+    text[length-1] = str[length-1];
+
+    return text;
+}
+
+void TeletextTrimControl(const struct EBU* ebu){
+	if(isBelleNuit(ebu)){
+		strncpy(ebu->gsi.TCF,ebu->gsi.TCP,8);
+		strncpy(ebu->gsi.TCP,"00000000",8);
+	}
+
+	char tnb[6];
+	tnb[5] = '\0';
+	strncpy(tnb,ebu->gsi.TNB,5);
+
+	int TNB = atoi(tnb);
+	int i;
+	for(i = 0; i < TNB; i++){
+		strncpy(ebu->tti[i].TF,TeletextTrimControlLine(ebu->tti[i].TF,112),112);
 	}
 }
 
@@ -245,6 +356,63 @@ void EBU30to25(struct EBU* ebu){
 	}
 }
 
+void EBUTC25to24(struct EBU_TC* tc){
+	float newframes = (float) ((tc->hours*60 + tc->minutes)*60 + tc->seconds)*25 + tc->frames;
+	printf("%f\n",newframes);
+	newframes *= 24;
+	printf("%f\n",newframes);
+	newframes /= 25;
+	printf("%f\n",newframes);
+
+	int frames = (int)roundf(newframes);
+	printf("%d\n",frames);
+
+	tc->frames = frames%25;
+	frames -= frames%25;
+	frames /= 25;
+	tc->seconds = frames%60;
+	frames -= frames%60;
+	frames /= 60;
+	tc->minutes = frames%60;
+	frames -= frames%60;
+	frames /= 60;
+	tc->hours = frames;
+
+	/*tc->hours = (frames/(25*3600)) - frames%(25*3600);
+	printf("%d=%d-%d\n",tc->hours,(frames/(25*3600)),frames%(25*3600));
+	frames -= tc->hours*25*3600;
+	tc->minutes = (frames/(25*60)) - frames%(25*60);
+	printf("%d=%d-%d\n",tc->minutes,(frames/(25*3600)),frames%(25*3600));
+	frames -= tc->minutes*25*60;
+	tc->seconds = (frames/(25)) - frames%(25);
+	printf("%d=%d-%d\n",tc->seconds,(frames/(25*3600)),frames%(25*3600));
+	frames -= tc->seconds*25;
+	tc->frames = frames;*/
+}
+
+void EBU25to24(struct EBU* ebu){
+	struct EBU_TC* newtc;
+	newtc = charToTC(ebu->gsi.TCP);
+	EBUTC25to24(newtc);
+	TCToChar(ebu->gsi.TCP,*newtc);
+
+	newtc = charToTC(ebu->gsi.TCF);
+	EBUTC25to24(newtc);
+	TCToChar(ebu->gsi.TCF,*newtc);
+
+	char cTNB[6];
+	cTNB[5] = '\0';
+
+	strncpy(cTNB,ebu->gsi.TNB,5);
+
+	int TNB = atoi(cTNB);
+	int i;
+	for(i = 0; i < TNB; i++){
+		EBUTC25to24(&(ebu->tti[i].TCI));
+		EBUTC25to24(&(ebu->tti[i].TCO));
+	}
+}
+
 void EBURemoveSpecialChars(struct EBU* ebu){
 	char tnb[6];
 	tnb[5] = '\0';
@@ -264,3 +432,4 @@ void EBURemoveSpecialChars(struct EBU* ebu){
 		}
 	}
 }
+
