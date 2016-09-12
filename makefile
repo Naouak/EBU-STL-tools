@@ -31,6 +31,10 @@ srt: srt.o string_utils.o
 	mkdir -p bin
 	gcc $(VERSION_NUMBER) -o bin/srt srt.o ebu.o string_utils.o
 
+ebu_rename: ebu_rename.o ebu.o string_utils.o
+	mkdir -p bin
+	gcc $(VERSION_NUMBER) -o bin/ebu_rename ebu_rename.o ebu.o string_utils.o
+
 %.o: %.c
 	gcc $(VERSION_NUMBER) -c $^
 
