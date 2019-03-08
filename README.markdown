@@ -20,7 +20,8 @@ EBU dump
 
 Dump in human readable way most data.
 
-usage: ebu_dump [-f] file.stl
+usage: ebu_dump [-f] [--option={option}] file.stl
 
 options:
 -f: Show full dump.
+--option: Show only selected option
