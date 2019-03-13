@@ -1,0 +1,14 @@
+Source: ebu-stl-tools
+Section: utils
+Priority: optional
+Maintainer: Vincent Moittie <vincent.moittie.pro@gmail.com>
+Build-Depends: debhelper (>= 10)
+Standards-Version: 4.3.0.3
+Homepage: https://github.com/Naouak/EBU-STL-tools
+
+Package: ebu-stl-tools
+Architecture: any
+Depends: ${misc:Depends}
+Suggests:
+Description: Tools for EBU-STL files
+ A collection of tools to manage EBU STL files.
